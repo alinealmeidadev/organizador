@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente IA Organizador Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-logo { font-size: 4em; margin-bottom: 20px; }
+        .login-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-subtitle { color: #666; margin-bottom: 40px; font-size: 1.1em; }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
+        .login-btn-google { background: white; color: #333; border: 2px solid #e0e0e0; }
+        .login-btn-github { background: #24292e; color: white; }
+        .login-btn-email { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .divider {
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+        }
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #999;
+            font-size: 0.9em;
+        }
+        .email-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            transition: border 0.3s;
+        }
+        .email-input:focus { outline: none; border-color: #667eea; }
+        .email-form { display: none; animation: fadeIn 0.3s; }
+        .email-form.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .back-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 15px;
+            text-decoration: underline;
+        }
+        .app-container { display: none; }
+        .app-container.active { display: flex; flex-direction: column; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo h1 {
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #667eea; }
+        .user-name { font-weight: bold; color: #333; }
+        .logout-btn {
+            padding: 8px 16px;
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: #e53e3e; transform: translateY(-2px); }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            gap: 20px;
+        }
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-box .number { font-size: 2em; font-weight: bold; }
+        .stat-box .label { font-size: 0.85em; opacity: 0.9; }
+        .sidebar h3 { margin: 20px 0 15px 0; color: #667eea; font-size: 1.1em; }
+        .task-item {
+            background: #f7f7f7;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            border-left: 3px solid #667eea;
+        }
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 140px);
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message { display: flex; gap: 12px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user { flex-direction: row-reverse; }
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+        .message.ai .message-avatar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .message.user .message-avatar { background: #48bb78; }
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            line-height: 1.6;
+        }
+        .message.ai .message-content { background: #f7f7f7; border-bottom-left-radius: 5px; }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .typing-indicator { display: none; align-items: center; gap: 12px; }
+        .typing-indicator.active { display: flex; }
+        .typing-dots { display: flex; gap: 4px; padding: 15px 20px; background: #f7f7f7; border-radius: 15px; }
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        .chat-input-container { padding: 20px; border-top: 1px solid #eee; background: #fafafa; }
+        .chat-input-wrapper { display: flex; gap: 10px; align-items: center; }
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+            background: white;
+        }
+        .chat-input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .send-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.3em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .send-button:hover:not(:disabled) { transform: scale(1.1); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .send-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; max-height: 300px; }
+            .login-box { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <div class="login-logo">🤖</div>
+            <h1 class="login-title">Assistente IA Organizador</h1>
+            <p class="login-subtitle">Organize sua vida com inteligência artificial</p>
+
+            <div id="loginButtons">
+                <button class="login-btn login-btn-google" onclick="loginWithGoogle()">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continuar com Google
+                </button>
+
+                <button class="login-btn login-btn-github" onclick="loginWithGithub()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    Continuar com GitHub
+                </button>
+
+                <div class="divider"><span>ou</span></div>
+
+                <button class="login-btn login-btn-email" onclick="showEmailForm()">
+                    📧 Continuar com Email
+                </button>
+            </div>
+
+            <div class="email-form" id="emailForm">
+                <input type="email" class="email-input" id="emailInput" placeholder="seu@email.com">
+                <button class="login-btn login-btn-email" onclick="loginWithEmail()">
+                    Enviar Link Mágico
+                </button>
+                <button class="back-btn" onclick="showLoginButtons()">← Voltar</button>
+                <p style="margin-top: 15px; font-size: 0.85em; color: #666;">
+                    Vamos enviar um link de acesso para seu email
+                </p>
+            </div>
+
+            <div class="loading" id="loginLoading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span style="font-size: 2em;">🤖</span>
+                    <div>
+                        <h1>Assistente IA Organizador</h1>
+                        <p style="font-size: 0.85em; color: #666;">Powered by Claude AI</p>
+                    </div>
+                </div>
+                <div class="user-info">
+                    <img class="user-avatar" id="userAvatar" src="" alt="Avatar">
+                    <span class="user-name" id="userName">Usuário</span>
+                    <button class="logout-btn" onclick="logout()">Sair</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="sidebar">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="number" id="taskCount">0</div>
+                        <div class="label">Tarefas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="routineCount">0</div>
+                        <div class="label">Rotinas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="reminderCount">0</div>
+                        <div class="label">Lembretes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="productivity">0%</div>
+                        <div class="label">Produtividade</div>
+                    </div>
+                </div>
+
+                <h3>📋 Tarefas Pendentes</h3>
+                <div id="taskList"></div>
+
+                <h3>🔄 Rotinas</h3>
+                <div id="routineList"></div>
+
+                <h3>🔔 Lembretes</h3>
+                <div id="reminderList"></div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <strong>Bem-vindo de volta! 👋</strong><br><br>
+                            Estou aqui para te ajudar a organizar sua vida. Como posso te ajudar hoje?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🤖</div>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="userInput" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+                        <button class="send-button" id="sendButton" onclick="sendMessage()">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ CONFIGURE AQUI SUAS CREDENCIAIS DO SUPABASE
+        const SUPABASE_URL = 'https://SEU_PROJECT_ID.supabase.co'; // COLOQUE SUA URL AQUI
+        const SUPABASE_KEY = 'SUA_ANON_KEY_AQUI'; // COLOQUE SUA KEY AQUI
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let tasks = [];
+        let routines = [];
+        let reminders = [];
+        let conversationHistory = [];
+
+        window.onload = async function() {
+            await checkAuth();
+        };
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showApp();
+                await loadUserData();
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('active');
+        }
+
+        function showApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            document.getElementById('userName').textContent = currentUser.user_metadata.name || currentUser.email;
+            document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.email}&background=667eea&color=fff`;
+        }
+
+        async function loginWithGoogle() {
+            showLoading();
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+            if (error) {
+                alert('Erro ao fazer login: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        async function loginWithGithub() {
+            showLoading();
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'github',
+                options: { redirectTo: window.location.origin }
+            });
+            if (error) {
+                alert('Erro ao fazer login: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        async function loginWithEmail() {
+            const email = document.getElementById('emailInput').value;
+            if (!email) {
+                alert('Por favor, digite seu email');
+                return;
+            }
+            showLoading();
+            const { error } = await supabase.auth.signInWithOtp({
+                email: email,
+                options: { emailRedirectTo: window.location.origin }
+            });
+            hideLoading();
+            if (error) {
+                alert('Erro: ' + error.message);
+            } else {
+                alert('✅ Link mágico enviado para seu email! Verifique sua caixa de entrada.');
+            }
+        }
+
+        async function logout() {
+            if (confirm('Deseja realmente sair?')) {
+                await supabase.auth.signOut();
+                currentUser = null;
+                tasks = [];
+                routines = [];
+                reminders = [];
+                showLogin();
+            }
+        }
+
+        function showEmailForm() {
+            document.getElementById('loginButtons').style.display = 'none';
+            document.getElementById('emailForm').classList.add('active');
+        }
+
+        function showLoginButtons() {
+            document.getElementById('loginButtons').style.display = 'block';
+            document.getElementById('emailForm').classList.remove('active');
+        }
+
+        function showLoading() {
+            document.getElementById('loginButtons').style.display = 'none';
+            document.getElementById('emailForm').style.display = 'none';
+            document.getElementById('loginLoading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loginButtons').style.display = 'block';
+            document.getElementById('loginLoading').style.display = 'none';
+        }
+
+        async function loadUserData() {
+            const { data, error } = await supabase
+                .from('user_data')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
+            if (data) {
+                tasks = data.tasks || [];
+                routines = data.routines || [];
+                reminders = data.reminders || [];
+            }
+            updateUI();
+        }
+
+        async function saveUserData() {
+            const { error } = await supabase
+                .from('user_data')
+                .upsert({
+                    user_id: currentUser.id,
+                    tasks: tasks,
+                    routines: routines,
+                    reminders: reminders,
+                    updated_at: new Date().toISOString()
+                });
+            if (error) console.error('Erro ao salvar:', error);
+            updateUI();
+        }
+
+        function updateUI() {
+            const pendingTasks = tasks.filter(t => !t.completed);
+            const completedTasks = tasks.filter(t => t.completed);
+            const productivity = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+            document.getElementById('taskCount').textContent = pendingTasks.length;
+            document.getElementById('routineCount').textContent = routines.length;
+            document.getElementById('reminderCount').textContent = reminders.length;
+            document.getElementById('productivity').textContent = productivity + '%';
+            updateTaskList();
+            updateRoutineList();
+            updateReminderList();
+        }
+
+        function updateTaskList() {
+            const list = document.getElementById('taskList');
+            const pendingTasks = tasks.filter(t => !t.completed).slice(0, 5);
+            if (pendingTasks.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma tarefa pendente! 🎉</div>';
+                return;
+            }
+            list.innerHTML = pendingTasks.map(task => `<div class="task-item">${task.title}</div>`).join('');
+        }
+
+        function updateRoutineList() {
+            const list = document.getElementById('routineList');
+            if (routines.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma rotina</div>';
+                return;
+            }
+            list.innerHTML = routines.slice(0, 5).map(routine => `<div class="task-item">${routine.title}</div>`).join('');
+        }
+
+        function updateReminderList() {
+            const list = document.getElementById('reminderList');
+            if (reminders.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Nenhum lembrete</div>';
+                return;
+            }
+            list.innerHTML = reminders.slice(0, 5).map(reminder => `<div class="task-item">${reminder.title}</div>`).join('');
+        }
+
+        function addMessage(content, isUser = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">${content}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.add('active');
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+            addMessage(message, true);
+            input.value = '';
+            showTyping();
+            
+            // Chamar sua API aqui
+            setTimeout(async () => {
+                hideTyping();
+                if (message.toLowerCase().includes('tarefa')) {
+                    const task = {
+                        id: Date.now(),
+                        title: message,
+                        completed: false,
+                        priority: 'medium'
+                    };
+                    tasks.push(task);
+                    await saveUserData();

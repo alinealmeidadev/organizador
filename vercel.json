@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "api/chat.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+---
+
+### 📄 **ARQUIVO 4: `.gitignore`**
+```
+node_modules/
+.vercel
+.DS_Store
+.env
+.env.local
