@@ -138,8 +138,6 @@
         const SUPABASE_URL = 'https://jabalxezcdtpbifonusc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYmFseGV6Y2R0cGJpZm9udXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4OTQwNzQsImV4cCI6MjA4MDQ3MDA3NH0.51WzjtkK7dPZP92HlmidnQVM95T6znWPRK-8l3TykCI';
         
-        const SUPABASE_KEY = 'sb_secret_0VSQFnmWh2M2-l-y0F_E7Q_weWWcw2n'; 
-        
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null, tasks = [], routines = [], reminders = [];
 
@@ -170,136 +168,229 @@
 
         async function loginWithGoogle() { 
             showLoading(); 
-            const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); 
-            if (error) { alert('Erro: ' + error.message); hideLoading(); } 
+            const { error } = await supabase.auth.signInWithOAuth({ 
+                provider: 'google', 
+                options: { redirectTo: window.location.origin } 
+            }); 
+            if (error) { 
+                console.error('Erro Google:', error);
+                alert('Erro ao fazer login com Google: ' + error.message); 
+                hideLoading(); 
+            } 
         }
 
         async function loginWithGithub() { 
             showLoading(); 
-            const { error } = await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } }); 
-            if (error) { alert('Erro: ' + error.message); hideLoading(); } 
+            const { error } = await supabase.auth.signInWithOAuth({ 
+                provider: 'github', 
+                options: { redirectTo: window.location.origin } 
+            }); 
+            if (error) { 
+                console.error('Erro GitHub:', error);
+                alert('Erro ao fazer login com GitHub: ' + error.message); 
+                hideLoading(); 
+            } 
         }
 
         async function loginWithEmail() { 
             const email = document.getElementById('emailInput').value; 
             if (!email) { alert('Digite seu email'); return; } 
             showLoading(); 
-            const { error } = await supabase.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.origin } }); 
+            const { error } = await supabase.auth.signInWithOtp({ 
+                email: email, 
+                options: { emailRedirectTo: window.location.origin } 
+            }); 
             hideLoading(); 
-            if (error) { alert('Erro: ' + error.message); } else { alert('✅ Link enviado para seu email!'); } 
+            if (error) { 
+                console.error('Erro Email:', error);
+                alert('Erro: ' + error.message); 
+            } else { 
+                alert('✅ Link mágico enviado para seu email! Verifique sua caixa de entrada.'); 
+            } 
         }
 
         async function logout() { 
             if (confirm('Deseja sair?')) { 
                 await supabase.auth.signOut(); 
-                currentUser = null; tasks = []; routines = []; reminders = []; 
+                currentUser = null; 
+                tasks = []; 
+                routines = []; 
+                reminders = []; 
                 showLogin(); 
             } 
         }
 
-        function showEmailForm() { document.getElementById('loginButtons').style.display = 'none'; document.getElementById('emailForm').classList.add('active'); }
-        function showLoginButtons() { document.getElementById('loginButtons').style.display = 'block'; document.getElementById('emailForm').classList.remove('active'); }
-        function showLoading() { document.getElementById('loginButtons').style.display = 'none'; document.getElementById('emailForm').style.display = 'none'; document.getElementById('loginLoading').style.display = 'block'; }
-        function hideLoading() { document.getElementById('loginButtons').style.display = 'block'; document.getElementById('loginLoading').style.display = 'none'; }
+        function showEmailForm() { 
+            document.getElementById('loginButtons').style.display = 'none'; 
+            document.getElementById('emailForm').classList.add('active'); 
+        }
+
+        function showLoginButtons() { 
+            document.getElementById('loginButtons').style.display = 'block'; 
+            document.getElementById('emailForm').classList.remove('active'); 
+        }
+
+        function showLoading() { 
+            document.getElementById('loginButtons').style.display = 'none'; 
+            document.getElementById('emailForm').style.display = 'none'; 
+            document.getElementById('loginLoading').style.display = 'block'; 
+        }
+
+        function hideLoading() { 
+            document.getElementById('loginButtons').style.display = 'block'; 
+            document.getElementById('loginLoading').style.display = 'none'; 
+        }
 
         async function loadUserData() { 
-            const { data, error } = await supabase.from('user_data').select('*').eq('user_id', currentUser.id).maybeSingle();
+            const { data, error } = await supabase
+                .from('user_data')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+            
             if (data) { 
                 tasks = data.tasks || []; 
                 routines = data.routines || []; 
                 reminders = data.reminders || []; 
             } else if (!error) {
-                // Usuário novo, dados vazios
-                tasks = []; routines = []; reminders = [];
+                tasks = []; 
+                routines = []; 
+                reminders = [];
             }
             updateUI(); 
         }
 
         async function saveUserData() { 
-            await supabase.from('user_data').upsert({ user_id: currentUser.id, tasks, routines, reminders, updated_at: new Date().toISOString() }); 
+            const { error } = await supabase
+                .from('user_data')
+                .upsert({ 
+                    user_id: currentUser.id, 
+                    tasks, 
+                    routines, 
+                    reminders, 
+                    updated_at: new Date().toISOString() 
+                }); 
+            
+            if (error) {
+                console.error('Erro ao salvar:', error);
+            }
             updateUI(); 
         }
 
         function updateUI() { 
-            const pending = tasks.filter(t => !t.completed), completed = tasks.filter(t => t.completed), prod = tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0; 
+            const pending = tasks.filter(t => !t.completed);
+            const completed = tasks.filter(t => t.completed);
+            const prod = tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0; 
+            
             document.getElementById('taskCount').textContent = pending.length; 
             document.getElementById('routineCount').textContent = routines.length; 
             document.getElementById('reminderCount').textContent = reminders.length; 
             document.getElementById('productivity').textContent = prod + '%'; 
-            updateTaskList(); updateRoutineList(); updateReminderList(); 
+            
+            updateTaskList(); 
+            updateRoutineList(); 
+            updateReminderList(); 
         }
 
         function updateTaskList() { 
-            const list = document.getElementById('taskList'), pending = tasks.filter(t => !t.completed).slice(0, 5); 
-            list.innerHTML = pending.length === 0 ? '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma tarefa! 🎉</div>' : pending.map(t => `<div class="task-item">${t.title}</div>`).join(''); 
+            const list = document.getElementById('taskList');
+            const pending = tasks.filter(t => !t.completed).slice(0, 5); 
+            list.innerHTML = pending.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma tarefa! 🎉</div>' : 
+                pending.map(t => `<div class="task-item">${t.title}</div>`).join(''); 
         }
+
         function updateRoutineList() { 
             const list = document.getElementById('routineList'); 
-            list.innerHTML = routines.length === 0 ? '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma rotina</div>' : routines.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
+            list.innerHTML = routines.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma rotina</div>' : 
+                routines.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
         }
+
         function updateReminderList() { 
             const list = document.getElementById('reminderList'); 
-            list.innerHTML = reminders.length === 0 ? '<div style="text-align: center; padding: 20px; color: #999;">Nenhum lembrete</div>' : reminders.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
+            list.innerHTML = reminders.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhum lembrete</div>' : 
+                reminders.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
         }
 
         function addMessage(content, isUser) { 
-            const div = document.getElementById('chatMessages'), msg = document.createElement('div'); 
+            const div = document.getElementById('chatMessages');
+            const msg = document.createElement('div'); 
             msg.className = `message ${isUser ? 'user' : 'ai'}`; 
             msg.innerHTML = `<div class="message-avatar">${isUser ? '👤' : '🤖'}</div><div class="message-content">${content}</div>`; 
             div.appendChild(msg); 
             div.scrollTop = div.scrollHeight; 
         }
 
-        function showTyping() { document.getElementById('typingIndicator').classList.add('active'); }
-        function hideTyping() { document.getElementById('typingIndicator').classList.remove('active'); }
+        function showTyping() { 
+            document.getElementById('typingIndicator').classList.add('active'); 
+        }
+
+        function hideTyping() { 
+            document.getElementById('typingIndicator').classList.remove('active'); 
+        }
 
         async function sendMessage() { 
-            const input = document.getElementById('userInput'), msg = input.value.trim(); 
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim(); 
             if (!msg) return; 
             
             addMessage(msg, true); 
             input.value = ''; 
             showTyping(); 
             
-            try {
-                // Chama a API Vercel que comunica com a Claude
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Erro na API: ${response.status}`);
-                }
-
-                const data = await response.json();
+            setTimeout(async () => {
                 hideTyping();
-
-                if (data.content && data.content[0]) {
-                    const aiText = data.content[0].text;
-                    addMessage(aiText, false);
-                    
-                    // Verificação simples se a IA sugeriu JSON (melhorar depois)
-                    if (aiText.includes("create_task")) {
-                        // Lógica futura para parsear o JSON da IA
-                    }
+                
+                // Processamento simples por enquanto
+                if (msg.toLowerCase().includes('tarefa')) {
+                    const task = {
+                        id: Date.now(),
+                        title: msg,
+                        completed: false,
+                        priority: 'medium'
+                    };
+                    tasks.push(task);
+                    await saveUserData();
+                    addMessage('✅ Tarefa adicionada com sucesso! Posso te ajudar com mais alguma coisa?', false);
+                } else if (msg.toLowerCase().includes('rotina')) {
+                    const routine = {
+                        id: Date.now(),
+                        title: msg,
+                        time: '08:00'
+                    };
+                    routines.push(routine);
+                    await saveUserData();
+                    addMessage('🔄 Rotina criada com sucesso! Continue assim!', false);
+                } else if (msg.toLowerCase().includes('lembrete')) {
+                    const reminder = {
+                        id: Date.now(),
+                        title: msg,
+                        datetime: new Date().toISOString()
+                    };
+                    reminders.push(reminder);
+                    await saveUserData();
+                    addMessage('🔔 Lembrete adicionado com sucesso!', false);
                 } else {
-                    addMessage('Recebi uma resposta vazia da IA.', false);
+                    addMessage('Entendi! Posso te ajudar a criar tarefas, rotinas e lembretes. O que você precisa organizar?', false);
                 }
-
-            } catch (error) {
-                console.error(error);
-                hideTyping();
-                addMessage('Desculpe, ocorreu um erro ao conectar com a inteligência artificial.', false);
-            }
+            }, 1000);
         }
 
-        function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
+        function handleKeyPress(e) { 
+            if (e.key === 'Enter') sendMessage(); 
+        }
         
         supabase.auth.onAuthStateChange((event, session) => { 
-            if (event === 'SIGNED_IN') { currentUser = session.user; showApp(); loadUserData(); } 
-            else if (event === 'SIGNED_OUT') { showLogin(); } 
+            console.log('Auth event:', event);
+            if (event === 'SIGNED_IN') { 
+                currentUser = session.user; 
+                showApp(); 
+                loadUserData(); 
+            } else if (event === 'SIGNED_OUT') { 
+                showLogin(); 
+            } 
         });
     </script>
 </body>
