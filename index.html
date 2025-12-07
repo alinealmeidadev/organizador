@@ -136,7 +136,7 @@
 
     <script>
         const SUPABASE_URL = 'https://jabalxezcdtpbifonusc.supabase.co';
-        const SUPABASE_KEY = 'sb_secret_0VSQFnmWh2M2-l-y0F_E7Q_weWWcw2n';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYmFseGV6Y2R0cGJpZm9udXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4OTQwNzQsImV4cCI6MjA4MDQ3MDA3NH0.51WzjtkK7dPZP92HlmidnQVM95T6znWPRK-8l3TykCI';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null, tasks = [], routines = [], reminders = [];
         window.onload = async function() { await checkAuth(); };
