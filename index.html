@@ -124,7 +124,7 @@
             </div>
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
-                    <div class="message ai"><div class="message-avatar">🤖</div><div class="message-content"><strong>Bem-vindo de volta! 👋</strong><br><br>Estou aqui para te ajudar a organizar sua vida. Como posso te ajudar hoje?</div></div>
+                    <div class="message ai"><div class="message-avatar">🤖</div><div class="message-content"><strong>Bem-vindo! 👋</strong><br><br>Estou aqui para te ajudar a organizar sua vida. Como posso te ajudar hoje?</div></div>
                 </div>
                 <div class="typing-indicator" id="typingIndicator"><div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🤖</div><div class="typing-dots"><span></span><span></span><span></span></div></div>
                 <div class="chat-input-container">
@@ -135,417 +135,305 @@
     </div>
 
     <script>
-    const SUPABASE_URL = 'https://jabalxezcdtpbifonusc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYmFseGV6Y2R0cGJpZm9udXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4OTQwNzQsImV4cCI6MjA4MDQ3MDA3NH0.51WzjtkK7dPZP92HlmidnQVM95T6znWPRK-8l3TykCI';
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let currentUser = null, tasks = [], routines = [], reminders = [], conversationHistory = [];
-
-    window.onload = async function() { await checkAuth(); };
-
-    async function checkAuth() { 
-        const { data: { session } } = await supabase.auth.getSession(); 
-        if (session) { 
-            currentUser = session.user; 
-            showApp(); 
-            await loadUserData(); 
-        } else { 
-            showLogin(); 
-        } 
-    }
-
-    function showLogin() { 
-        document.getElementById('loginContainer').style.display = 'flex'; 
-        document.getElementById('appContainer').classList.remove('active'); 
-    }
-
-    function showApp() { 
-        document.getElementById('loginContainer').style.display = 'none'; 
-        document.getElementById('appContainer').classList.add('active'); 
-        document.getElementById('userName').textContent = currentUser.user_metadata.name || currentUser.email; 
-        document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.email}&background=667eea&color=fff`; 
-    }
-
-    async function loginWithGoogle() { 
-        showLoading(); 
-        const { error } = await supabase.auth.signInWithOAuth({ 
-            provider: 'google', 
-            options: { redirectTo: window.location.origin } 
-        }); 
-        if (error) { 
-            console.error('Erro Google:', error);
-            alert('Erro ao fazer login: ' + error.message); 
-            hideLoading(); 
-        } 
-    }
-
-    async function loginWithGithub() { 
-        showLoading(); 
-        const { error } = await supabase.auth.signInWithOAuth({ 
-            provider: 'github', 
-            options: { redirectTo: window.location.origin } 
-        }); 
-        if (error) { 
-            console.error('Erro GitHub:', error);
-            alert('Erro ao fazer login: ' + error.message); 
-            hideLoading(); 
-        } 
-    }
-
-    async function loginWithEmail() { 
-        const email = document.getElementById('emailInput').value; 
-        if (!email) { alert('Digite seu email'); return; } 
-        showLoading(); 
-        const { error } = await supabase.auth.signInWithOtp({ 
-            email: email, 
-            options: { emailRedirectTo: window.location.origin } 
-        }); 
-        hideLoading(); 
-        if (error) { 
-            alert('Erro: ' + error.message); 
-        } else { 
-            alert('✅ Link enviado para seu email!'); 
-        } 
-    }
-
-    async function logout() { 
-        if (confirm('Deseja sair?')) { 
-            await supabase.auth.signOut(); 
-            currentUser = null; 
-            tasks = []; 
-            routines = []; 
-            reminders = []; 
-            conversationHistory = [];
-            showLogin(); 
-        } 
-    }
-
-    function showEmailForm() { 
-        document.getElementById('loginButtons').style.display = 'none'; 
-        document.getElementById('emailForm').classList.add('active'); 
-    }
-
-    function showLoginButtons() { 
-        document.getElementById('loginButtons').style.display = 'block'; 
-        document.getElementById('emailForm').classList.remove('active'); 
-    }
-
-    function showLoading() { 
-        document.getElementById('loginButtons').style.display = 'none'; 
-        document.getElementById('emailForm').style.display = 'none'; 
-        document.getElementById('loginLoading').style.display = 'block'; 
-    }
-
-    function hideLoading() { 
-        document.getElementById('loginButtons').style.display = 'block'; 
-        document.getElementById('loginLoading').style.display = 'none'; 
-    }
-
-    async function loadUserData() { 
-        const { data, error } = await supabase
-            .from('user_data')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .maybeSingle();
+        const SUPABASE_URL = 'https://jabalxezcdtpbifonusc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYmFseGV6Y2R0cGJpZm9udXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4OTQwNzQsImV4cCI6MjA4MDQ3MDA3NH0.51WzjtkK7dPZP92HlmidnQVM95T6znWPRK-8l3TykCI';
         
-        if (data) { 
-            tasks = data.tasks || []; 
-            routines = data.routines || []; 
-            reminders = data.reminders || []; 
-        } else {
-            tasks = []; 
-            routines = []; 
-            reminders = [];
-        }
-        updateUI(); 
-    }
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null, tasks = [], routines = [], reminders = [], conversationHistory = [];
 
-    async function saveUserData() { 
-        const { error } = await supabase
-            .from('user_data')
-            .upsert({ 
-                user_id: currentUser.id, 
-                tasks, 
-                routines, 
-                reminders, 
-                updated_at: new Date().toISOString() 
+        window.onload = async function() { 
+            console.log('App iniciado');
+            await checkAuth(); 
+        };
+
+        async function checkAuth() { 
+            const { data: { session }, error } = await supabase.auth.getSession();
+            console.log('Session:', session, 'Error:', error);
+            
+            if (session) { 
+                currentUser = session.user;
+                console.log('Usuário logado:', currentUser.email);
+                showApp(); 
+                await loadUserData(); 
+            } else { 
+                showLogin(); 
+            } 
+        }
+
+        function showLogin() { 
+            console.log('Mostrando login');
+            document.getElementById('loginContainer').style.display = 'flex'; 
+            document.getElementById('appContainer').classList.remove('active'); 
+        }
+
+        function showApp() { 
+            console.log('Mostrando app');
+            document.getElementById('loginContainer').style.display = 'none'; 
+            document.getElementById('appContainer').classList.add('active'); 
+            document.getElementById('userName').textContent = currentUser.user_metadata.name || currentUser.email; 
+            document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=667eea&color=fff`; 
+        }
+
+        async function loginWithGoogle() { 
+            console.log('Tentando login com Google');
+            showLoading(); 
+            
+            const { data, error } = await supabase.auth.signInWithOAuth({ 
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/`
+                }
             }); 
-        
-        if (error) {
-            console.error('Erro ao salvar:', error);
-        }
-        updateUI(); 
-    }
-
-    function updateUI() { 
-        const pending = tasks.filter(t => !t.completed);
-        const completed = tasks.filter(t => t.completed);
-        const prod = tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0; 
-        
-        document.getElementById('taskCount').textContent = pending.length; 
-        document.getElementById('routineCount').textContent = routines.length; 
-        document.getElementById('reminderCount').textContent = reminders.length; 
-        document.getElementById('productivity').textContent = prod + '%'; 
-        
-        updateTaskList(); 
-        updateRoutineList(); 
-        updateReminderList(); 
-    }
-
-    function updateTaskList() { 
-        const list = document.getElementById('taskList');
-        const pending = tasks.filter(t => !t.completed).slice(0, 5); 
-        list.innerHTML = pending.length === 0 ? 
-            '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma tarefa! 🎉</div>' : 
-            pending.map(t => `<div class="task-item">${t.title}</div>`).join(''); 
-    }
-
-    function updateRoutineList() { 
-        const list = document.getElementById('routineList'); 
-        list.innerHTML = routines.length === 0 ? 
-            '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma rotina</div>' : 
-            routines.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
-    }
-
-    function updateReminderList() { 
-        const list = document.getElementById('reminderList'); 
-        list.innerHTML = reminders.length === 0 ? 
-            '<div style="text-align: center; padding: 20px; color: #999;">Nenhum lembrete</div>' : 
-            reminders.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
-    }
-
-    function addMessage(content, isUser) { 
-        const div = document.getElementById('chatMessages');
-        const msg = document.createElement('div'); 
-        msg.className = `message ${isUser ? 'user' : 'ai'}`; 
-        msg.innerHTML = `<div class="message-avatar">${isUser ? '👤' : '🤖'}</div><div class="message-content">${content}</div>`; 
-        div.appendChild(msg); 
-        div.scrollTop = div.scrollHeight;
-        
-        // Salvar no histórico
-        conversationHistory.push({
-            role: isUser ? 'user' : 'assistant',
-            content: content.replace(/<[^>]*>/g, '') // Remove HTML
-        });
-    }
-
-    function showTyping() { 
-        document.getElementById('typingIndicator').classList.add('active');
-        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-    }
-
-    function hideTyping() { 
-        document.getElementById('typingIndicator').classList.remove('active'); 
-    }
-
-    async function sendMessage() { 
-        const input = document.getElementById('userInput');
-        const msg = input.value.trim(); 
-        if (!msg) return; 
-        
-        addMessage(msg, true); 
-        input.value = ''; 
-        showTyping(); 
-        
-        try {
-            // Construir contexto para a IA
-            const systemPrompt = `Você é um assistente pessoal inteligente especializado em organização e produtividade. 
-
-DADOS ATUAIS DO USUÁRIO:
-- Tarefas pendentes: ${tasks.filter(t => !t.completed).length}
-- Tarefas concluídas: ${tasks.filter(t => t.completed).length}
-- Rotinas ativas: ${routines.length}
-- Lembretes: ${reminders.length}
-
-TAREFAS ATUAIS:
-${tasks.filter(t => !t.completed).map(t => `- ${t.title}`).join('\n') || 'Nenhuma tarefa'}
-
-SUAS CAPACIDADES:
-1. Criar tarefas, rotinas e lembretes
-2. Analisar produtividade
-3. Dar sugestões personalizadas
-4. Organizar o dia do usuário
-
-INSTRUÇÕES:
-- Quando o usuário pedir para criar algo, responda naturalmente confirmando
-- Se pedir agenda/planejamento, crie múltiplas tarefas organizadas
-- Seja conversacional, proativo e amigável
-- Use emojis moderadamente
-- Sempre termine oferecendo ajuda adicional
-
-Responda em português do Brasil.`;
-
-            // Chamar API do Claude através da Vercel
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    message: msg,
-                    system: systemPrompt,
-                    history: conversationHistory.slice(-6) // Últimas 3 interações
-                })
-            });
-
-            hideTyping();
-
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}`);
-            }
-
-            const data = await response.json();
             
-            if (data.content && data.content[0]) {
-                const aiResponse = data.content[0].text;
-                addMessage(aiResponse, false);
-                
-                // Detectar ações e executar
-                await processAIActions(msg, aiResponse);
-                
+            console.log('Resultado Google:', data, error);
+            
+            if (error) { 
+                console.error('Erro Google:', error);
+                alert('Erro ao fazer login: ' + error.message); 
+                hideLoading(); 
+            } 
+        }
+
+        async function loginWithGithub() { 
+            console.log('Tentando login com GitHub');
+            showLoading(); 
+            
+            const { data, error } = await supabase.auth.signInWithOAuth({ 
+                provider: 'github',
+                options: {
+                    redirectTo: `${window.location.origin}/`
+                }
+            }); 
+            
+            console.log('Resultado GitHub:', data, error);
+            
+            if (error) { 
+                console.error('Erro GitHub:', error);
+                alert('Erro ao fazer login: ' + error.message); 
+                hideLoading(); 
+            } 
+        }
+
+        async function loginWithEmail() { 
+            const email = document.getElementById('emailInput').value; 
+            if (!email) { alert('Digite seu email'); return; } 
+            
+            console.log('Tentando login com Email:', email);
+            showLoading(); 
+            
+            const { error } = await supabase.auth.signInWithOtp({ 
+                email: email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/`
+                }
+            }); 
+            
+            hideLoading(); 
+            
+            if (error) { 
+                console.error('Erro Email:', error);
+                alert('Erro: ' + error.message); 
+            } else { 
+                alert('✅ Link enviado para seu email!'); 
+            } 
+        }
+
+        async function logout() { 
+            if (confirm('Deseja sair?')) { 
+                await supabase.auth.signOut(); 
+                currentUser = null; 
+                tasks = []; 
+                routines = []; 
+                reminders = []; 
+                conversationHistory = [];
+                showLogin(); 
+            } 
+        }
+
+        function showEmailForm() { 
+            document.getElementById('loginButtons').style.display = 'none'; 
+            document.getElementById('emailForm').classList.add('active'); 
+        }
+
+        function showLoginButtons() { 
+            document.getElementById('loginButtons').style.display = 'block'; 
+            document.getElementById('emailForm').classList.remove('active'); 
+        }
+
+        function showLoading() { 
+            document.getElementById('loginButtons').style.display = 'none'; 
+            document.getElementById('emailForm').style.display = 'none'; 
+            document.getElementById('loginLoading').style.display = 'block'; 
+        }
+
+        function hideLoading() { 
+            document.getElementById('loginButtons').style.display = 'block'; 
+            document.getElementById('loginLoading').style.display = 'none'; 
+        }
+
+        async function loadUserData() { 
+            const { data, error } = await supabase
+                .from('user_data')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+            
+            console.log('Dados carregados:', data, error);
+            
+            if (data) { 
+                tasks = data.tasks || []; 
+                routines = data.routines || []; 
+                reminders = data.reminders || []; 
             } else {
-                addMessage('Desculpe, não consegui processar sua mensagem. Tente novamente!', false);
+                tasks = []; 
+                routines = []; 
+                reminders = [];
             }
-
-        } catch (error) {
-            console.error('Erro:', error);
-            hideTyping();
-            addMessage('❌ Erro ao conectar com a IA. Usando modo offline...', false);
-            
-            // Fallback para modo offline
-            await offlineMode(msg);
+            updateUI(); 
         }
-    }
 
-    async function processAIActions(userMsg, aiResponse) {
-        const lowerMsg = userMsg.toLowerCase();
-        const lowerAI = aiResponse.toLowerCase();
-        
-        // Detectar criação de tarefa
-        if ((lowerMsg.includes('tarefa') || lowerMsg.includes('fazer') || lowerMsg.includes('preciso')) 
-            && !lowerMsg.includes('listar') && !lowerMsg.includes('mostrar')) {
+        async function saveUserData() { 
+            const { error } = await supabase
+                .from('user_data')
+                .upsert({ 
+                    user_id: currentUser.id, 
+                    tasks, 
+                    routines, 
+                    reminders, 
+                    updated_at: new Date().toISOString() 
+                }); 
             
-            let taskTitle = userMsg;
-            
-            // Tentar extrair só a tarefa
-            if (lowerMsg.includes('tarefa para')) {
-                taskTitle = userMsg.split(/tarefa para/i)[1]?.trim() || userMsg;
-            } else if (lowerMsg.includes('preciso')) {
-                taskTitle = userMsg.split(/preciso/i)[1]?.trim() || userMsg;
+            if (error) {
+                console.error('Erro ao salvar:', error);
+            } else {
+                console.log('Dados salvos com sucesso');
             }
-            
-            const task = {
-                id: Date.now(),
-                title: taskTitle,
-                completed: false,
-                priority: detectPriority(userMsg),
-                createdAt: new Date().toISOString()
-            };
-            
-            tasks.push(task);
-            await saveUserData();
+            updateUI(); 
         }
-        
-        // Detectar criação de rotina
-        if (lowerMsg.includes('rotina') || lowerMsg.includes('todo dia') || lowerMsg.includes('diariamente')) {
-            const routine = {
-                id: Date.now(),
-                title: userMsg,
-                time: extractTime(userMsg) || '08:00',
-                frequency: 'Diária'
-            };
-            
-            routines.push(routine);
-            await saveUserData();
-        }
-        
-        // Detectar criação de lembrete
-        if (lowerMsg.includes('lembr') || lowerMsg.includes('avis')) {
-            const reminder = {
-                id: Date.now(),
-                title: userMsg,
-                datetime: extractDateTime(userMsg)
-            };
-            
-            reminders.push(reminder);
-            await saveUserData();
-        }
-        
-        // Detectar planejamento de semana/dia
-        if (lowerMsg.includes('semana') || lowerMsg.includes('agenda') || lowerMsg.includes('planejar')) {
-            // A IA já deu sugestões, aqui podemos criar tarefas baseadas nelas
-            // (implementar lógica futura se necessário)
-        }
-    }
 
-    function detectPriority(text) {
-        const lower = text.toLowerCase();
-        if (lower.includes('urgente') || lower.includes('importante') || lower.includes('prioridade')) {
-            return 'high';
-        } else if (lower.includes('depois') || lower.includes('quando puder')) {
-            return 'low';
+        function updateUI() { 
+            const pending = tasks.filter(t => !t.completed);
+            const completed = tasks.filter(t => t.completed);
+            const prod = tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0; 
+            
+            document.getElementById('taskCount').textContent = pending.length; 
+            document.getElementById('routineCount').textContent = routines.length; 
+            document.getElementById('reminderCount').textContent = reminders.length; 
+            document.getElementById('productivity').textContent = prod + '%'; 
+            
+            updateTaskList(); 
+            updateRoutineList(); 
+            updateReminderList(); 
         }
-        return 'medium';
-    }
 
-    function extractTime(text) {
-        const timeMatch = text.match(/(\d{1,2}):?(\d{2})?(?:\s*h)?/);
-        if (timeMatch) {
-            const hours = timeMatch[1].padStart(2, '0');
-            const minutes = (timeMatch[2] || '00').padStart(2, '0');
-            return `${hours}:${minutes}`;
+        function updateTaskList() { 
+            const list = document.getElementById('taskList');
+            const pending = tasks.filter(t => !t.completed).slice(0, 5); 
+            list.innerHTML = pending.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma tarefa! 🎉</div>' : 
+                pending.map(t => `<div class="task-item">${t.title}</div>`).join(''); 
         }
-        return null;
-    }
 
-    function extractDateTime(text) {
-        const now = new Date();
-        
-        if (text.includes('amanhã')) {
-            now.setDate(now.getDate() + 1);
-            now.setHours(9, 0, 0, 0);
-            return now.toISOString();
+        function updateRoutineList() { 
+            const list = document.getElementById('routineList'); 
+            list.innerHTML = routines.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhuma rotina</div>' : 
+                routines.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
         }
-        
-        const hoursMatch = text.match(/daqui (\d+) horas?/i);
-        if (hoursMatch) {
-            now.setHours(now.getHours() + parseInt(hoursMatch[1]));
-            return now.toISOString();
-        }
-        
-        now.setHours(now.getHours() + 1);
-        return now.toISOString();
-    }
 
-    async function offlineMode(msg) {
-        const lower = msg.toLowerCase();
-        
-        if (lower.includes('tarefa')) {
-            tasks.push({
-                id: Date.now(),
-                title: msg,
-                completed: false,
-                priority: 'medium'
+        function updateReminderList() { 
+            const list = document.getElementById('reminderList'); 
+            list.innerHTML = reminders.length === 0 ? 
+                '<div style="text-align: center; padding: 20px; color: #999;">Nenhum lembrete</div>' : 
+                reminders.slice(0, 5).map(r => `<div class="task-item">${r.title}</div>`).join(''); 
+        }
+
+        function addMessage(content, isUser) { 
+            const div = document.getElementById('chatMessages');
+            const msg = document.createElement('div'); 
+            msg.className = `message ${isUser ? 'user' : 'ai'}`; 
+            msg.innerHTML = `<div class="message-avatar">${isUser ? '👤' : '🤖'}</div><div class="message-content">${content}</div>`; 
+            div.appendChild(msg); 
+            div.scrollTop = div.scrollHeight;
+            
+            conversationHistory.push({
+                role: isUser ? 'user' : 'assistant',
+                content: content.replace(/<[^>]*>/g, '')
             });
-            await saveUserData();
-            addMessage('✅ Tarefa adicionada! (modo offline)', false);
-        } else {
-            addMessage('No momento estou em modo offline. Posso ajudar criando tarefas, rotinas e lembretes!', false);
         }
-    }
 
-    function handleKeyPress(e) { 
-        if (e.key === 'Enter') sendMessage(); 
-    }
-    
-    supabase.auth.onAuthStateChange((event, session) => { 
-        if (event === 'SIGNED_IN') { 
-            currentUser = session.user; 
-            showApp(); 
-            loadUserData(); 
-        } else if (event === 'SIGNED_OUT') { 
-            showLogin(); 
-        } 
-    });
-</script>
+        function showTyping() { 
+            document.getElementById('typingIndicator').classList.add('active');
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTyping() { 
+            document.getElementById('typingIndicator').classList.remove('active'); 
+        }
+
+        async function sendMessage() { 
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim(); 
+            if (!msg) return; 
+            
+            addMessage(msg, true); 
+            input.value = ''; 
+            showTyping(); 
+            
+            setTimeout(async () => {
+                hideTyping();
+                const lower = msg.toLowerCase();
+                
+                if (lower.includes('tarefa') || lower.includes('fazer') || lower.includes('preciso')) {
+                    tasks.push({
+                        id: Date.now(),
+                        title: msg,
+                        completed: false,
+                        priority: 'medium',
+                        createdAt: new Date().toISOString()
+                    });
+                    await saveUserData();
+                    addMessage('✅ Tarefa adicionada com sucesso! Posso te ajudar com mais alguma coisa?', false);
+                } else if (lower.includes('rotina')) {
+                    routines.push({
+                        id: Date.now(),
+                        title: msg,
+                        time: '08:00',
+                        frequency: 'Diária'
+                    });
+                    await saveUserData();
+                    addMessage('🔄 Rotina criada com sucesso! Continue assim!', false);
+                } else if (lower.includes('lembr') || lower.includes('avis')) {
+                    reminders.push({
+                        id: Date.now(),
+                        title: msg,
+                        datetime: new Date().toISOString()
+                    });
+                    await saveUserData();
+                    addMessage('🔔 Lembrete adicionado com sucesso!', false);
+                } else if (lower.includes('agenda') || lower.includes('semana') || lower.includes('dia')) {
+                    addMessage(`📅 Vamos organizar! Posso te ajudar a criar uma lista de tarefas para a semana. Me diga o que você precisa fazer e vou organizar tudo para você!`, false);
+                } else {
+                    addMessage('Entendi! Posso te ajudar a criar tarefas, rotinas e lembretes. O que você precisa organizar?', false);
+                }
+            }, 1000);
+        }
+
+        function handleKeyPress(e) { 
+            if (e.key === 'Enter') sendMessage(); 
+        }
+        
+        supabase.auth.onAuthStateChange((event, session) => { 
+            console.log('Auth change:', event, session);
+            
+            if (event === 'SIGNED_IN' && session) { 
+                currentUser = session.user; 
+                showApp(); 
+                loadUserData(); 
+            } else if (event === 'SIGNED_OUT') { 
+                showLogin(); 
+            }
+        });
+    </script>
 </body>
 </html>
-        
